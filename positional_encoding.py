@@ -1,11 +1,9 @@
-import numpy as np
+import torch.nn as nn
 
-def positional_encoding(seq_length: int, d_model: int) -> np.ndarray:
-    position = np.arange(seq_length).reshape(-1, 1)
-    div_term = np.exp(np.arange(0, d_model, 2) * (-np.log(10000.0) / d_model))
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model: int, max_len: int = 5000):
+        super().__init__()
+        self.register_buffer("pe", positional_encoding(max_len, d_model))  # pas un paramètre
 
-    pe = np.zeros((seq_length, d_model))
-    pe[:, 0::2] = np.sin(position * div_term)
-    pe[:, 1::2] = np.cos(position * div_term)
-
-    return pe
+    def forward(self, x: torch.Tensor) -> torch.Tensor:   # x: (batch, seq_len, d_model)
+        return x + self.pe[: x.size(1)]
