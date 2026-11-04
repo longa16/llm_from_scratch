@@ -1,3 +1,6 @@
+import numpy as np
+from typing import List, Dict
+
 class SimpleTokenizer:
     def __init__(self):
         self.word_to_id: Dict[str, int] = {}
