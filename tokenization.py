@@ -1,5 +1,44 @@
-import numpy as np
 from typing import List, Dict
+
+from tokenizers import Tokenizer, decoders, models, normalizers, pre_tokenizers, trainers
+
+
+class SubwordTokenizer:
+    def __init__(self, tokenizer: Tokenizer) -> None:
+        self.tokenizer = tokenizer
+
+    @classmethod
+    def train(cls, text: str, vocab_size: int) -> "SubwordTokenizer":
+        tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
+        tokenizer.normalizer = normalizers.Sequence(
+            [normalizers.NFKC(), normalizers.Lowercase()]
+        )
+        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+        tokenizer.decoder = decoders.ByteLevel()
+        trainer = trainers.BpeTrainer(
+            vocab_size=vocab_size,
+            special_tokens=["[UNK]"],
+            initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+        )
+        tokenizer.train_from_iterator([text], trainer=trainer)
+        return cls(tokenizer)
+
+    @classmethod
+    def from_str(cls, serialized: str) -> "SubwordTokenizer":
+        return cls(Tokenizer.from_str(serialized))
+
+    @property
+    def vocab_size(self) -> int:
+        return self.tokenizer.get_vocab_size()
+
+    def encode(self, text: str) -> List[int]:
+        return self.tokenizer.encode(text).ids
+
+    def decode(self, ids: List[int]) -> str:
+        return self.tokenizer.decode(ids, skip_special_tokens=True)
+
+    def to_str(self) -> str:
+        return self.tokenizer.to_str()
 
 class SimpleTokenizer:
     def __init__(self):
